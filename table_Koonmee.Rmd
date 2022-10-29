@@ -1,0 +1,150 @@
+---
+title: "Table"
+author: "Nat Koonmee"
+date: '2022-10-29'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(include = FALSE)
+
+library("readxl")
+library(dplyr)
+library(ggpubr)
+library(tidyverse)
+library(ggplot2)
+library(gapminder)
+library(TSstudio)
+library(hrbrthemes)
+library(scales)
+library(lubridate)
+library(caret)
+library(plotly)
+
+library(kableExtra)
+```
+
+
+```{r}
+
+Daily = read.csv("Daily_foco_weather.csv")
+Hourly = read.csv("Hourly_foco_weather.csv")
+Daily$Date <- as.Date(Daily$Date, format = "%m/%d/%Y")
+# Daily$Date <- as.Date(format(df$Date, '%m/%d/%Y'), format = '%m/%d/%Y')
+
+
+df <- Daily[order(Daily$Date),]
+iL = length(df[,1])
+for (i in 1:iL){
+  if(is.na(df[i, 18])){
+    df[i, 18] = 0
+  }
+}
+
+
+
+
+colnames(df)
+namelis <- c("Date", "Temp..fahrenheit.", "Temp..celsius.",
+             "Wind..m.s.","Wind..mhp.",
+             "Gust..m.s.",
+             "Gust..mhp.", "Season", "ReportCase", "Relative.Humidity....")
+
+Colist <- c("Date", "Fahrenheit", "Celsius",
+              "Meter per second","Mile per hour",
+             "Meter per second",
+             "Mile per hour", "Season", "ReportCase", "Humidity (%)")
+```
+
+
+
+```{r}
+df2 <- data.frame(lapply(df, 
+                       function(x) if(is.numeric(x)) round(x, 0) else x))
+
+
+```
+
+
+```{r}
+set.seed(99)
+
+NROW = 30
+temp <- head(df2[sample(nrow(df2), NROW), ], n = NROW)
+rownames(temp) <- NULL
+# case <- head(temp, n = NROW)
+case = temp
+
+
+```
+
+```{r}
+case$Temp..celsius. <- ifelse(
+  case$Temp..celsius. < 1,
+  cell_spec(case$Temp..celsius., color = "blue", bold = T,
+            tooltip = paste("_", case$Temp..celsius.)),
+  cell_spec(case$Temp..celsius.,
+            tooltip = paste("_", case$Temp..celsius.))
+)
+
+case$Temp..fahrenheit. <- ifelse(
+  case$Temp..fahrenheit. < 33,
+  cell_spec(case$Temp..fahrenheit., color = "blue", bold = T,
+            tooltip = paste("_", case$Temp..fahrenheit.)),
+  cell_spec(case$Temp..fahrenheit.,
+            tooltip = paste("_", case$Temp..fahrenheit.))
+)
+
+case$ReportCase <- ifelse(
+  case$ReportCase != 0,
+  cell_spec(case$ReportCase, color = "red", bold = T,
+            tooltip = paste("_", case$ReportCase)),
+  cell_spec(case$ReportCase,
+            tooltip = paste("_", case$ReportCase))
+)
+
+case$Wind..m.s. <- ifelse(
+  case$Wind..m.s. >= 5,
+  cell_spec(case$Wind..m.s., color = "red", bold = T,
+            tooltip = paste("_", case$Wind..m.s.)),
+  cell_spec(case$Wind..m.s.,
+            tooltip = paste("_", case$Wind..m.s.))
+)
+
+case$Gust..m.s. <- ifelse(
+  case$Gust..m.s. >= 5,
+  cell_spec(case$Gust..m.s., color = "red", bold = T,
+            tooltip = paste("_", case$Gust..m.s.)),
+  cell_spec(case$Gust..m.s.,
+            tooltip = paste("_", case$Gust..m.s.))
+)
+
+```
+
+
+```{r, include = TRUE}
+case %>%
+  select(all_of(namelis)) %>% kbl(escape = FALSE, col.names =Colist,
+                                  align = c("l", "r", "r", "r", "r", "r", "r", "r", "r", "r"),
+                                  digits = 1) %>%
+  add_header_above( c(" ", "Temerature" = 2, "Wind" = 2, "Gust" = 2, "", "", "")) %>%
+  kable_styling(font_size = 14, fixed_thead = TRUE)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
